@@ -16,9 +16,6 @@ Additionally, we will **not** cover interpretations in depth in this class. The 
 
 We'll use the following data throughout today's class:
 ```{r}
-dat<- read.csv("~/Desktop/PSY4960-StatisticsData.csv")
-```
-```{r}
 set.seed(100)
 subj<- 1:60
 conditionFirst<- c(rep("Exclusion", 30), rep("Inclusion", 30))
@@ -31,54 +28,75 @@ detectionInclusion<- sample(c("incorrect", "correct"), 60, replace=TRUE)
 playChoice<- sample(c("includer", "excluder"), 60,replace=TRUE)
 dat<-cbind.data.frame(subj, conditionFirst,age, type, evaluationExclusion, evaluationInclusion, detectionExclusion, detectionInclusion, playChoice)
 ```
-
-
 ### Learning Outcome 1: Obtaining descriptive statistics in R
 We've gone through some of these already, but I want to make sure we're on the same page. For descriptive statistics, we'll mostly focus on the measures of central tendency and measures of variability. 
 
 #### Central Tendency
 **mean** 
 ```{r}
-
+mean(dat$evaluationExclusion)
 ```
 **median**
 ```{r}
-
+median(dat$evaluationExclusion)
 ```
 **mode**
 ```{r}
-
+library(modeest)
+mfv(dat$evaluationExclusion)
 ```
 
 #### Variability
 **range**
 ```{r}
-
+range(dat$evaluationExclusion)
 ```
 **interquartile range**
 ```{r}
-
+IQR(dat$evaluationExclusion)
 ```
 **standard deviation**
 ```{r}
-
+sd(dat$evaluationExclusion)
 ```
 **variance**
 ```{r}
+var(dat$evaluationExclusion)
+```
 
+**summary**
+```{r}
+summary(dat)
 ```
 
 #### z score
 The other thing that we'll put in this section is how to create a z score in your data. This allows us to view one score relative to others, even if they are collected from different distributions
 
 ```{r}
-
+scale(dat$evaluationExclusion)
 ```
 
 ##### Learning Outcome 1 Practice
 1) calculate the mean, median, and mode for the inclusion evaluations
+```{r}
+"mean"
+mean(dat$evaluationInclusion)
+"median"
+median(dat$evaluationInclusion)
+"mode"
+mfv(dat$evaluationInclusion)
+```
 2) what do you notice about these scores? (are they the same? different?)
+they are different
+```{r}
+library(ggplot2)
+ggplot(dat, aes(evaluationInclusion))+ geom_histogram()
+```
+
 3) create z scores for the inclusion evaluations. Interpret what participant 3's z score means. 
+```{r}
+scale(dat$evaluationInclusion)
+```
 
 ### Learning Outcome 2: Conduct common parametric analyses in R
 Now that we have covered some descriptive statistics, we'll talk about parametric ones. Parametric statistics are those that rely on assumptions to make inferences from the sample to the population. We'll go through correlations, t-tests, regression, and ANOVA. We'll go through nonparametric tests, or those that rely on less assumptions, in the next section. 
@@ -87,16 +105,18 @@ Now that we have covered some descriptive statistics, we'll talk about parametri
 We'll practice running correlations using the dataset above. To do this, we'll look at the correlation between Evaluations for includers and excluders in the dataset. 
 cor(x, y)
 ```{r}
-
+cor(dat$evaluationExclusion, dat$evaluationInclusion)
 ```
 **Note:** It's great that we can see the correlation between these two measures, but we don't have any additional information, ie information related to significance.We can use another function, cor.test, to get information about significance.
 cor.test(x,y)
 ```{r}
+cor.test(dat$evaluationExclusion, dat$evaluationInclusion)
 
 ```
 We can change whether we our conducting a one tailed or a two tailed test by including an additional argument "alternative." It defaults to a two tailed test, but we can specify a one tailed test in either direction (greater or less) 
 ```{r}
-
+cor.test(dat$evaluationExclusion, dat$evaluationInclusion, alternative= "greater")
+cor.test(dat$evaluationExclusion, dat$evaluationInclusion, alternative= "less")
 ```
 
 #### t-tests
@@ -105,67 +125,74 @@ We can run a variety of t-tests using the same function t.test().
 A one sample t test can be computed by specifying mu in the arguments. 
 t.test(variable, mu)
 ```{r}
-
+t.test(dat$evaluationExclusion, mu=2.5)
 ```
 
 ##### two samples t-test
 There are two ways we can use this function when we have two variables (independent or paired). The first is to type our x and y variables in as we did in the correlation function above. 
 ```{r}
-
+t.test(dat$evaluationExclusion, dat$evaluationInclusion)
 ```
 OR
 we can type them in as a formula in R. Formulas typically take the form y ~ x. To show you this example, I need to reformat our wide data to long data (using what we did last week!)
 
 ```{r}
 library(tidyr)
-
+datLong<- pivot_longer(dat, cols= c("evaluationExclusion", "evaluationInclusion"), values_to= "evaluation", names_to = "playerEvaluated")
 ```
 This changes the t test arguments to: 
 t.test(formula, data)
 y~x
 ```{r}
-
+t.test(evaluation~playerEvaluated, data=datLong)
 ```
 If we think about the structure of our data, our data seem to be from a repeated measure. It's okay if you didn't infer that, it's my data and I made them to be this way. This is why including readme files for your data (whether it's publicly available or you're sharing it with collaborators) is really important! 
 
 To account for the lack of dependence between observations, we'll run a paired samples t test. The code looks pretty similar to above, but we'll use an additional argument. 
 ```{r}
-
+t.test(evaluation~playerEvaluated, data=datLong, var.equal=TRUE)
 ```
 
 You'll notice that the top of the t-test output says "Welch's Two sample t-test." This R function automatically assumes that the variances of each group are unequal. If we wanted to run a traditional paired-samples t-test, we need to include another argument. 
 ```{r}
-
+t.test(evaluation~ playerEvaluated, data=datLong, paired=TRUE)
 ```
 
 Finally, we some times run one tailed vs two tailed tests, just like we did with the correlations. 
 ```{r}
+t.test(evaluation~ playerEvaluated, data=datLong, paired=TRUE, alternative="greater")
 
 ```
 Differences between Greater and Less:
 ```{r}
+t.test(evaluation~ playerEvaluated, data=datLong, paired=TRUE, alternative="less")
 
 ```
 
 ##### Correlation and T-test practice
 1. Open the mtcars dataset. Find the correlation between mpg and hp
 ```{r}
-
+data(mtcars)
+cor(mtcars$mpg, mtcars$hp)
+cor.test(mtcars$mpg, mtcars$hp)
 ```
 
-2. Conduct a significance test to determine if displacement and miles per gallon are correlated. 
+2. Conduct a significance test to determine if displacement and miles per gallon significantly correlated. 
 ```{r}
-
+cor.test(mtcars$mpg, mtcars$hp)
 ```
 
 3. Conduct a two-tailed t-test examining whether the average mpg differs by transmission (am). 
 ```{r}
-
+t.test(mpg~am, data=mtcars, var.equal=TRUE)
+t.test(mtcars$mpg[mtcars$am==1], mtcars$mpg[mtcars$am==0], var.equal=TRUE)
+t.test(mtcars$mpg, mtcars$am) #not the same thing
 ```
 
 4. Conduct a one-tailed t-test examining whether the average displacement(disp) differs  engine shape (vs). Specifically, test whether straight engines result in higher displacements.
 ```{r}
-
+t.test(disp~vs, data=mtcars, var.equal=TRUE, alternative="greater")
+t.test(mtcars$disp[mtcars$vs==0], mtcars$disp[mtcars$vs==1], var.equal=TRUE, alternative="greater")
 ```
 
 ###Extra Code about Correlation Tables 
@@ -173,49 +200,69 @@ cor() can also be used to create correlation matrices, but need to create a data
 cor(dat)
 we'll do a quick example w/ mt cars
 ```{r}
-
+View(cor(mtcars))
 ```
 
 #### regression
 Back to the Exclusion Dataset we imported. The code for a linear regression is really similar (ie identical)  to what we used for t-tests.
 lm(DV ~ IV, data)
 ```{r}
+colnames(dat)
+lm(evaluationExclusion~ conditionFirst, data= dat)
+library(ggplot2)
+ggplot(dat, aes(conditionFirst, evaluationExclusion)) +geom_point() 
+class(dat$conditionFirst)
+dat$conditionFirst<-as.factor(dat$conditionFirst)
+dat$conditionFirst<- relevel(dat$conditionFirst, ref= "Inclusion")
+lm(evaluationExclusion~ conditionFirst, data= dat)
 
 ```
 I tend to save my linear models because it allows me to do a few useful things:
 Just like we used summary to get a summary of our data, we can use the same function to learn more about our models
 ```{r}
+lm1<- lm(evaluationExclusion~ conditionFirst, data=dat)
+lm1
+summary(lm1)
 ```
 str() is a new(ish) function that allows us to learn about the structure of our model. We can use this to get specific pieces of information, or additional information that "underlies" our model (eg residuals and fitted values)
 ```{r}
-
+str(lm1)
+lm1$residuals
+lm1$fitted.values
+lm1$coefficients
 ```
 
 **Multiple Regression**
 We can include additional factors and interaction terms to our models: 
 
 ```{r}
-
+multReg<- lm(evaluationExclusion~age + evaluationInclusion, data=dat)
+summary(multReg)
 ```
 The : can be used instead of + to include an interaction in your model
 ```{r}
-
+MultReg2<- lm(evaluationExclusion~ age + evaluationInclusion + age:evaluationInclusion, data=dat)
+summary(MultReg2)
 ```
+
 
 Using * instead of + will include both the individual predictors AND their interactions 
 ```{r}
+MultReg2<- lm(evaluationExclusion~ age*evaluationInclusion,  data=dat)
+summary(MultReg2)
 
 ```
 
 The class of our data and the way data are entered matter for regression models. 
-let's consider age:
+let's consider condition:
 ```{r}
+MultReg3<- lm(evaluationExclusion~ age*conditionFirst, data=dat)
+summary(MultReg3)
 
+ggplot(dat, aes(age, evaluationExclusion, group= conditionFirst, color=conditionFirst)) +geom_point() + geom_smooth(method="lm")
 ```
+
 Data don't really look continuous. We can change age to a factor. This will influence our output.  
-```{r}
-
-```
 
 We may also need to change the reference level for factors. For instance, in this case, we care about how age relates to children's evaluations of excluders. 
 relevel(dat$age, ref="x")
@@ -229,7 +276,16 @@ There are several ways you can get Anova results in R. There are differences in 
 "aov()"
 "anova()"
 library(car)
+linearM<- lm(evaluationExclusion~ age, data=dat)
+Anova(linearM)
+summary(linearM)
 
+linearM2<- lm(evaluationExclusion~age*conditionFirst, dat)
+Anova(linearM2)
+
+linearM3<- lm(evaluationExclusion~as.factor(age)*as.factor(conditionFirst), data=dat)
+Anova(linearM3)
+summary(linearM3)
 ```
 I typically use Anova from the car package, but there are some exceptions. We can talk about them as they come up. 
 
@@ -238,17 +294,23 @@ I'd like to be **very clear** the above models we ran with the long dataset are 
 ####Regression and ANOVA practice
 1. Use the mtcars dataset and create a linear model that predicts mpg from cylinder (cyl) and displacement. Print the results
 ```{r}
-
+summary(lm(mpg~cyl +disp, data=mtcars))
+ggplot(mtcars, aes(disp, mpg, color=as.factor(cyl)))+geom_point()+theme_classic()
 ```
 
 2. Create the same model, but include an interaction term. 
 ```{r}
-
+summary(lm(mpg~cyl *disp, data=mtcars))
+ggplot(mtcars, aes(disp, mpg, group=cyl, color=as.factor(cyl)))+geom_point()+theme_classic()+geom_smooth(method="lm")
+cor(mtcars)
 ```
 
 3. Run an ANOVA predicting hp from the transmission variable. 
 ```{r}
+Anova(lm(hp~am, data=mtcars))
+ggplot(mtcars, aes(hp, fill=as.factor(am)))+geom_bar(width=10, position=position_dodge())+ theme_classic()
 
+ggplot(mtcars, aes(hp, fill=as.factor(am)))+ geom_boxplot()
 ```
 ###Learning Outcome 3: Nonparametric analyses in R
 Nonparametric analyses are run similarly to their parametric versions. In the interest of time, we'll talk about biserial correlations, spearman correlations, Wilcoxon sign rank tests, and binomial tests. 
@@ -256,53 +318,80 @@ Nonparametric analyses are run similarly to their parametric versions. In the in
 **biserial correlations**
 Biserial correlations involve a binary outcome and a continuous variable. To run one in R, we need the ltm package. 
 ```{r}
-
+library(ltm)
 ```
 the function is biserial.cor(continuous, binary)
 ```{r}
+colnames(dat)
+biserial.cor(dat$evaluationExclusion, dat$detectionExclusion)
 
 ```
 Mathematically, this is the same as the pearson's version. 
 ```{r}
-
+#cor.test(dat$evaluationExclusion, dat$detectionExclusion)
 ```
 
 **spearman's rho**
 We can calculate spearman's rho and kendall's tau the same way. We just need to use the "method" argument for cor.test 
 ```{r}
+cor.test(dat$evaluationExclusion, dat$evaluationInclusion, method = "spearman")
 
+cor.test(dat$evaluationExclusion, dat$evaluationInclusion, method = "kendall")
+
+cor.test(dat$evaluationExclusion, dat$evaluationInclusion)
 ```
 
 **Wilcoxon sign rank test**
 This is the nonparametric version of the t-test. It has the same arguments. We'll do one as an example. 
 wilcox.test
 ```{r}
-
+t.test(evaluationExclusion~conditionFirst, data=dat)
+wilcox.test(evaluationExclusion~conditionFirst, data=dat)
+wilcox.test(evaluationExclusion~conditionFirst, data=dat, paired=TRUE)
 ```
 
 **binomial tests**
 We use binomial tests to determine if something happens more often than chance. The function is binom.test and it has the following arguments: 
 binom.test(successes, totalScores, probability)
+```{r}
+binom.test(10, 10, p =.5)
+```
 
 for instance, if we have 10 true/false statements, and get 6 right. Does this differ from chance? 
 ```{r}
-
+binom.test(6,10, p=.5)
 ```
 This is a two-tailed test, but can also do one tailed by specifying the alternative. 
+
+20 questions, 5 choices, and want to know probability of getting 14
+```{r}
+binom.test(14, 20, p=.20)
+```
+
 
 ####Learning Outcome 3 practice: 
 1. using the mtcars dataset, run a correlation to determine the relationship between engine shape (vs) and hp. What test did you run and why? 
 ```{r}
-
+biserial.cor(mtcars$hp, mtcars$vs)
+cor.test(mtcars$hp, mtcars$vs)
+ggplot(mtcars, aes(vs, hp))+geom_point()+geom_smooth(method="lm")
 ```
 biserial.cor because vs is binary
 
 2. Run a wilcoxon sign rank test to determine if cylinder and gears have different means. 
 ```{r}
-
+wilcox.test(mtcars$gear, mtcars$cyl)
+wilcox.test(mtcars$cyl, mtcars$gear)
 ```
 
 3. Run a binomial test to determine if the number of cars with manual transmission differs from chance. (hint: use the ? feature to learn more about the dataset.)
 ```{r}
-
+binom.test(13,32,p=.5)
+length(mtcars$am)
+length(mtcars$am[mtcars$am==1])
+summary(mtcars$am==1)
+summary(as.factor(mtcars$am))
+library(plyr)
+count(mtcars$am==1)
+table(mtcars$am)
 ```
